@@ -56,7 +56,7 @@ class SlackMonitor:
     def react_to_message(self, message, emoji, reason):
         try:
             text: str = message["text"].replace("\n", "")[:50]
-            logger.info(f"[REACT {emoji}] {reason} text='{text}' (...)")
+            logger.info(f"[REACT {emoji}] {reason} text='{text} (...)'")
 
             if settings.DRY_RUN:
                 return
