@@ -18,3 +18,5 @@ NEED_REACTION_COUNT = int(os.getenv("NEED_REACTION_COUNT", 3))
 LAST_MESSAGES_LIMIT = int(os.getenv("LAST_MESSAGES_LIMIT", 3))
 
 LOOP_INTERVAL = int(os.getenv("LOOP_INTERVAL", 60))
+
+REPORT_RESULT_TO_DM = get_env_type_boolean("REPORT_RESULT_TO_DM", True)

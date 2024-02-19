@@ -11,11 +11,12 @@ logger = logging_handler.logger
 
 class SlackMonitor:
     def __init__(self, token, channel_id):
-        self.client = WebClient(token=token)
+        self.slack_client = WebClient(token=token)
         self.channel_id = channel_id
+        self.reaction_notifications = {}  # 리액션 결과를 저장할 리스트
 
     def _get_recent_messages(self, limit=10) -> List[Dict]:
-        result = self.client.conversations_history(channel=self.channel_id, limit=limit)
+        result = self.slack_client.conversations_history(channel=self.channel_id, limit=limit)
         return result["messages"]
 
     def _is_already_reacted(self, reactions, user_id):
@@ -24,35 +25,10 @@ class SlackMonitor:
                 return True
         return False
 
-    def scanning_emoji_action(self, user_id, last_message_limit=10):
-        messages = self._get_recent_messages(last_message_limit)
-
-        for message in messages:
-            if not (reactions := message.get("reactions")):
-                continue
-
-            # 이미 반응한 메세지는 스킵
-            if self._is_already_reacted(reactions, user_id):
-                continue
-
-            # `NEED_REACTION_COUNT` 이상으로 반응이 일어난 이모지에 같은 이모지로 반응
-            for reaction in reactions:
-                if reaction["count"] >= settings.NEED_REACTION_COUNT:
-                    self.react_to_message(message, reaction["name"], reason="popular reaction count")
-
-            # '@here', '@channel', '@everyone' 와 같은 채널 멘션이 포함된 메세지에 "넵" 반응
-            if "<!here>" in message["text"] or "<!channel>" in message["text"] or "<!everyone>" in message["text"]:
-                self.react_to_message(message, Emoji.NEP, reason="Mention detected")
-
-            # @user_id 멘션된 메세지에 "넵" 반응
-            if f"<@{user_id}>" in message["text"]:
-                self.react_to_message(message, Emoji.NEP, reason="Mention detected")
-
-            # @backend 를 포함하는 메세지에 "눈" 반응
-            if "<!subteam^SUWJRKTCP|@backend>" in message["text"]:
-                self.react_to_message(message, Emoji.EYES, reason="@backend detected")
-
     def react_to_message(self, message, emoji, reason):
+        '''
+        이모지를 메시지에 추가합니다.
+        '''
         try:
             text: str = message["text"].replace("\n", "")[:50]
             logger.info(f"[REACT {emoji}] {reason} text='{text} (...)'")
@@ -60,6 +36,66 @@ class SlackMonitor:
             if settings.DRY_RUN:
                 return
 
-            self.client.reactions_add(channel=self.channel_id, name=emoji, timestamp=message["ts"])
+            self.slack_client.reactions_add(channel=self.channel_id, name=emoji, timestamp=message["ts"])
+
+            # 리액션 결과를 저장 (1:1 DM으로 결과를 전송할 때 사용)
+            message_id = message["ts"]  # 슬랙 메시지의 타임스탬프를 고유 ID로 사용
+            if message_id in self.reaction_notifications:
+                # 이미 존재하는 메시지에 대해 추가적인 리액션 정보를 업데이트
+                self.reaction_notifications[message_id]["emojis"].append(emoji)
+            else:
+                # 새로운 메시지에 대한 리액션 정보를 저장
+                text = message.get("text", "")
+                # 50자
+                text = text.replace("\n", "")[:50]
+                self.reaction_notifications[message_id] = {"emojis": [emoji], "text": text, "reason": reason}
         except SlackApiError as e:
             logger.warn(f"Error adding reaction: {e.response['error']}")
+
+    def send_reaction_notifications(self):
+        '''
+        1:1 DM으로 리액션 결과를 전송합니다.
+        '''
+        if not settings.REPORT_RESULT_TO_DM:
+            return
+
+        for _, info in self.reaction_notifications.items():
+            emojis = ", ".join([f":{e}:" for e in info["emojis"]])
+            reasons = ", ".join(info["reasons"])
+            text = info["text"]
+            message = f"{emojis} 를 {reasons} 로 인해 달았습니다.\n`{text}`"
+
+            if settings.DRY_RUN:
+                return
+            self.slack_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
+
+        self.reaction_notifications.clear()
+
+    def _should_react(self, message, user_id):
+        '''
+        반응해야 하는 메시지인지 확인합니다.
+        '''
+        if not (reactions := message.get("reactions")):
+            return False
+
+        if self._is_already_reacted(reactions, user_id):
+            return False
+
+        for reaction in reactions:
+            if reaction["count"] >= settings.NEED_REACTION_COUNT:
+                self.react_to_message(message, reaction["name"], reason="popular reaction count")
+
+        if "<!here>" in message["text"] or "<!channel>" in message["text"] or "<!everyone>" in message["text"]:
+            self.react_to_message(message, Emoji.NEP, reason="Mention detected")
+
+        if f"<@{user_id}>" in message["text"]:
+            self.react_to_message(message, Emoji.NEP, reason="Mention detected")
+
+        if "<!subteam^SUWJRKTCP|@backend>" in message["text"]:
+            self.react_to_message(message, Emoji.EYES, reason="@backend detected")
+
+    def run(self, user_id, last_message_limit=10):
+        messages = self._get_recent_messages(last_message_limit)
+
+        for message in messages:
+            self._should_react(message, user_id)

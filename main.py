@@ -13,6 +13,6 @@ if __name__ == "__main__":
 
     while True:
         if settings.WORKING_HOUR_START <= time.localtime().tm_hour < settings.WORKING_HOUR_END:
-            monitor.scanning_emoji_action(settings.SLACK_USER_ID, last_message_limit=settings.LAST_MESSAGES_LIMIT)
+            monitor.run(settings.SLACK_USER_ID, last_message_limit=settings.LAST_MESSAGES_LIMIT)
 
         time.sleep(settings.LOOP_INTERVAL)
