@@ -25,7 +25,6 @@ class SlackMonitor:
         return False
 
     def scanning_emoji_action(self, user_id, last_message_limit=10):
-        logger.info(f"fetching recent messages")
         messages = self._get_recent_messages(last_message_limit)
 
         for message in messages:
