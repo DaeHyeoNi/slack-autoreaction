@@ -9,12 +9,6 @@ from config import logging_handler, settings
 logger = logging_handler.logger
 
 
-class Emoji(Enum):
-    NEP = "nep"
-    EYES = "eyes"
-    CLAP = "allo-clap"
-
-
 class SlackMonitor:
     def __init__(self, token, channel_id):
         self.slack_client = WebClient(token=token)
@@ -91,14 +85,14 @@ class SlackMonitor:
         channel_mention_triggers = ["<!here>", "<!channel>", "<!everyone>"]
         for trigger in channel_mention_triggers:
             if trigger in message["text"]:
-                self.react_to_message(message, Emoji.NEP, reason="Mention detected")
+                self.react_to_message(message, settings.EMOJI_MENTION_IN_CHANNEL_ALL_USERS, reason="Mention detected")
                 break  # 한번만 반응하도록
 
         if f"<@{user_id}>" in message["text"]:
-            self.react_to_message(message, Emoji.NEP, reason="Mention detected")
+            self.react_to_message(message, settings.EMOJI_MENTION_TO_ME, reason="Mention detected")
 
-        if "<!subteam^SUWJRKTCP|@backend>" in message["text"]:
-            self.react_to_message(message, Emoji.EYES, reason="@backend detected")
+        if settings.SLACK_MYTEAM_ID in message["text"]:
+            self.react_to_message(message, settings.EMOJI_MENTION_TO_MY_TEAM, reason="@MyTeam mention detected")
 
     def run(self, user_id, last_message_limit=10):
         messages = self._get_recent_messages(last_message_limit)
