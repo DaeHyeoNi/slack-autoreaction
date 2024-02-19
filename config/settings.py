@@ -7,8 +7,8 @@ def get_env_type_boolean(env: str, default=False) -> bool:
 
 
 DRY_RUN = get_env_type_boolean("DRY_RUN", True)
-WORKING_HOUR_START = int(os.getenv("WORKING_HOUR_START"))
-WORKING_HOUR_END = int(os.getenv("WORKING_HOUR_END"))
+WORKING_HOUR_START = int(os.getenv("WORKING_HOUR_START", 10))
+WORKING_HOUR_END = int(os.getenv("WORKING_HOUR_END", 19))
 
 SLACK_USER_TOKEN = os.getenv("SLACK_USER_TOKEN")
 SLACK_USER_ID = os.getenv("SLACK_USER_ID")
