@@ -15,5 +15,5 @@ pipenv run main.py
 
 ## 필요한 Scope
 
-- "reactions:write"
-- "groups:history"
+- `reactions:write`
+- `groups:history`
