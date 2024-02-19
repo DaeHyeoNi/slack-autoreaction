@@ -1,7 +1,7 @@
 import time
 
 from config import settings
-from slack_monitor import SlackMonitor
+from modules.slack_monitor import SlackMonitor
 
 if __name__ == "__main__":
     monitor = SlackMonitor(
