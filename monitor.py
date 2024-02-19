@@ -1,11 +1,12 @@
-import time
 from typing import Dict, List
 
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 
-from config import settings
+from config import logging_handler, settings
 from emoji import Emoji
+
+logger = logging_handler.logger
 
 
 class SlackMonitor:
@@ -23,47 +24,43 @@ class SlackMonitor:
                 return True
         return False
 
-    def _need_empathy(self):
-        return [Emoji.NEP, Emoji.CLAP]
-
     def scanning_emoji_action(self, user_id, last_message_limit=10):
-        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}] fetching recent messages")
+        logger.info(f"fetching recent messages")
         messages = self._get_recent_messages(last_message_limit)
 
         for message in messages:
             reactions = message.get("reactions")
 
-            # if user already reacted to the message
+            # 이미 반응한 메세지는 스킵
             if reactions and self._is_already_reacted(message["reactions"], user_id):
                 continue
 
-            # if emoji count is greater than `NEED_REACTION_COUNT`
+            # `NEED_REACTION_COUNT` 이상으로 반응이 일어난 이모지에 같은 이모지로 반응
             if reactions and message["reactions"]:
                 for reaction in message["reactions"]:
-                    for emoji in self._need_empathy():
-                        if reaction["name"] == emoji and reaction["count"] >= settings.NEED_REACTION_COUNT:
-                            self.react_to_message(message, emoji, reason="popular reaction count")
+                    if reaction["count"] >= settings.NEED_REACTION_COUNT:
+                        self.react_to_message(message, reaction["name"], reason="popular reaction count")
 
-            # Check if message contains '@here', '@channel', or '@everyone'
+            # '@here', '@channel', '@everyone' 와 같은 채널 멘션이 포함된 메세지에 "넵" 반응
             if "<!here>" in message["text"] or "<!channel>" in message["text"] or "<!everyone>" in message["text"]:
                 self.react_to_message(message, Emoji.NEP, reason="Mention detected")
 
-            # Check if message contains @user_id
+            # @user_id 멘션된 메세지에 "넵" 반응
             if f"<@{user_id}>" in message["text"]:
                 self.react_to_message(message, Emoji.NEP, reason="Mention detected")
 
-            # Check if message contains backend
+            # @backend 를 포함하는 메세지에 "눈" 반응
             if "<!subteam^SUWJRKTCP|@backend>" in message["text"]:
                 self.react_to_message(message, Emoji.EYES, reason="@backend detected")
 
     def react_to_message(self, message, emoji, reason):
         try:
             text: str = message["text"].replace("\n", "")[:50]
-            print(f"[REACT {emoji}] {reason} text='{text}'")
+            logger.info(f"[REACT {emoji}] {reason} text='{text}' (...)")
 
             if settings.DRY_RUN:
                 return
 
             self.client.reactions_add(channel=self.channel_id, name=emoji, timestamp=message["ts"])
         except SlackApiError as e:
-            print(f"Error adding reaction: {e.response['error']}")
+            logger.warn(f"Error adding reaction: {e.response['error']}")
