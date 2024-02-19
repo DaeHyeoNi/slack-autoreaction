@@ -28,17 +28,17 @@ class SlackMonitor:
         messages = self._get_recent_messages(last_message_limit)
 
         for message in messages:
-            reactions = message.get("reactions")
+            if not (reactions := message.get("reactions")):
+                continue
 
             # 이미 반응한 메세지는 스킵
-            if reactions and self._is_already_reacted(message["reactions"], user_id):
+            if self._is_already_reacted(reactions, user_id):
                 continue
 
             # `NEED_REACTION_COUNT` 이상으로 반응이 일어난 이모지에 같은 이모지로 반응
-            if reactions and message["reactions"]:
-                for reaction in message["reactions"]:
-                    if reaction["count"] >= settings.NEED_REACTION_COUNT:
-                        self.react_to_message(message, reaction["name"], reason="popular reaction count")
+            for reaction in reactions:
+                if reaction["count"] >= settings.NEED_REACTION_COUNT:
+                    self.react_to_message(message, reaction["name"], reason="popular reaction count")
 
             # '@here', '@channel', '@everyone' 와 같은 채널 멘션이 포함된 메세지에 "넵" 반응
             if "<!here>" in message["text"] or "<!channel>" in message["text"] or "<!everyone>" in message["text"]:
