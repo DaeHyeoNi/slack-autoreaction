@@ -63,6 +63,8 @@ class SlackMonitor:
             reason = info["reason"]
             text = info["text"]
             message = f"{emojis} 를 {reason} 로 인해 달았습니다.\n`{text}`"
+
+            assert settings.SLACK_USER_ID.startswith("U"), "SLACK_USER_ID should start with U(USER_ID)"
             self.slack_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
 
         self.reaction_notifications.clear()
