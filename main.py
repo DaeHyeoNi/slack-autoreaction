@@ -13,6 +13,7 @@ def is_weekend():
 
     return time.localtime().tm_wday >= 5
 
+
 def in_working_time():
     return settings.WORKING_HOUR_START <= time.localtime().tm_hour < settings.WORKING_HOUR_END
 
