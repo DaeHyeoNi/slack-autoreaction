@@ -1,7 +1,9 @@
 import time
 
-from config import settings
+from config import logging_handler, settings
 from modules.slack_monitor import SlackMonitor
+
+logger = logging_handler.get_logger()
 
 
 def is_weekend():
@@ -14,6 +16,8 @@ if __name__ == "__main__":
         token=settings.SLACK_USER_TOKEN,
         channel_id=settings.SLACK_TARGET_CHANNEL_ID,
     )
+
+    logger.info("Start monitoring...")
 
     while True:
         current_day = time.localtime().tm_wday

@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Dict, List
 
 from slack_sdk import WebClient
@@ -6,7 +5,7 @@ from slack_sdk.errors import SlackApiError
 
 from config import logging_handler, settings
 
-logger = logging_handler.logger
+logger = logging_handler.get_logger()
 
 
 class SlackMonitor:
