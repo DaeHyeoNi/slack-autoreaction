@@ -24,6 +24,9 @@ class SlackMonitor:
         except SlackApiError as e:
             logger.error(f"Failed to fetch recent messages: {e.response['error']}")
             return []
+        except Exception as e:
+            logger.error(f"Failed to fetch recent messages: {e}")
+            return []
 
     def _is_already_reacted(self, reactions, user_id) -> bool:
         """
