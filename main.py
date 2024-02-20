@@ -7,8 +7,15 @@ logger = logging_handler.get_logger()
 
 
 def is_weekend():
+    # 주말에 실행하도록 설정되어 있다면 항상 True를 반환합니다.
+    if not settings.WORKING_DAY_ONLY:
+        return True
+
     current_day = time.localtime().tm_wday
     return current_day >= 5
+
+def in_working_time():
+    return settings.WORKING_HOUR_START <= time.localtime().tm_hour < settings.WORKING_HOUR_END
 
 
 if __name__ == "__main__":
@@ -21,7 +28,7 @@ if __name__ == "__main__":
 
     while True:
         current_day = time.localtime().tm_wday
-        if not is_weekend() and settings.WORKING_HOUR_START <= time.localtime().tm_hour < settings.WORKING_HOUR_END:
+        if not is_weekend() and in_working_time:
             monitor.run(settings.SLACK_USER_ID, last_message_limit=settings.LAST_MESSAGES_LIMIT)
 
         time.sleep(settings.LOOP_INTERVAL)
