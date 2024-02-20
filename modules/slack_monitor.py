@@ -51,7 +51,7 @@ class SlackMonitor:
         self.reaction_notifications.setdefault(message_id, {"emojis": [], "text": text, "reason": reason})
         self.reaction_notifications[message_id]["emojis"].append(emoji)
 
-    def send_reaction_notifications(self):
+    def send_report_to_DM_reaction_notifications(self):
         """
         1:1 DM으로 리액션 결과를 전송합니다.
         """
@@ -98,3 +98,5 @@ class SlackMonitor:
 
         for message in messages:
             self._should_react(message, user_id)
+
+        self.send_report_to_DM_reaction_notifications()
