@@ -60,7 +60,7 @@ class SlackMonitor:
 
         for info in self.reaction_notifications.values():
             emojis = ", ".join([f":{e}:" for e in info["emojis"]])
-            reason = ", ".join(info["reason"])
+            reason = info["reason"]
             text = info["text"]
             message = f"{emojis} 를 {reason} 로 인해 달았습니다.\n`{text}`"
             self.slack_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
