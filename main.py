@@ -11,8 +11,7 @@ def is_weekend():
     if not settings.WORKING_DAY_ONLY:
         return True
 
-    current_day = time.localtime().tm_wday
-    return current_day >= 5
+    return time.localtime().tm_wday >= 5
 
 def in_working_time():
     return settings.WORKING_HOUR_START <= time.localtime().tm_hour < settings.WORKING_HOUR_END
@@ -27,7 +26,6 @@ if __name__ == "__main__":
     logger.info("Start monitoring...")
 
     while True:
-        current_day = time.localtime().tm_wday
         if not is_weekend() and in_working_time:
             monitor.run(settings.SLACK_USER_ID, last_message_limit=settings.LAST_MESSAGES_LIMIT)
 
