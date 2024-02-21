@@ -19,8 +19,6 @@ WORKING_DAY_ONLY = get_env_type_boolean("WORKING_DAY_ONLY", True)
 
 SLACK_USER_TOKEN = os.getenv("SLACK_USER_TOKEN")
 assert SLACK_USER_TOKEN.startswith("xoxp-"), "User token should start with xoxp-"
-SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
-assert SLACK_BOT_TOKEN.startswith("xoxb-"), "Bot token should start with xoxb-"
 
 # Check for User ID reacted to the message
 SLACK_USER_ID = os.getenv("SLACK_USER_ID")
@@ -39,3 +37,7 @@ EMOJI_MENTION_TO_ME = os.getenv("EMOJI_MENTION_TO_ME", "nep")
 EMOJI_MENTION_TO_MY_TEAM = os.getenv("EMOJI_MENTION_TO_MY_TEAM", "eyes")
 
 REPORT_RESULT_TO_DM = get_env_type_boolean("REPORT_RESULT_TO_DM", True)
+
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+if REPORT_RESULT_TO_DM:
+    assert SLACK_BOT_TOKEN.startswith("xoxb-"), "Bot token should start with xoxb-"
