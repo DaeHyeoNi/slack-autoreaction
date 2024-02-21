@@ -9,10 +9,12 @@ logger = logging_handler.get_logger()
 
 
 class SlackMonitor:
-    def __init__(self, token, channel_id):
-        self.slack_client = WebClient(token=token)
-        self.channel_id = channel_id
-        self.reaction_notifications = {}  # 리액션 결과를 저장할 리스트
+    def __init__(self):
+        self.slack_client = WebClient(token=settings.SLACK_USER_TOKEN)
+        self.slack_bot_client = WebClient(token=settings.SLACK_BOT_TOKEN)
+        self.channel_id = settings.SLACK_TARGET_CHANNEL_ID
+        self.my_user_id = settings.SLACK_USER_ID
+        self.__reaction_notifications = {}  # 리액션 결과를 저장할 리스트
 
     def _get_recent_messages(self, limit=10) -> List[Dict]:
         """
@@ -51,8 +53,8 @@ class SlackMonitor:
 
         # Store reaction notification.
         message_id = message["ts"]
-        self.reaction_notifications.setdefault(message_id, {"emojis": [], "text": text, "reason": reason})
-        self.reaction_notifications[message_id]["emojis"].append(emoji)
+        self.__reaction_notifications.setdefault(message_id, {"emojis": [], "text": text, "reason": reason})
+        self.__reaction_notifications[message_id]["emojis"].append(emoji)
 
     def send_report_to_DM_reaction_notifications(self):
         """
@@ -61,16 +63,16 @@ class SlackMonitor:
         if not settings.REPORT_RESULT_TO_DM or settings.DRY_RUN:
             return
 
-        for info in self.reaction_notifications.values():
+        for info in self.__reaction_notifications.values():
             emojis = ", ".join([f":{e}:" for e in info["emojis"]])
             reason = info["reason"]
             text = info["text"]
             message = f"{emojis} 를 {reason} 로 인해 달았습니다.\n`{text}`"
 
-            assert settings.SLACK_USER_ID.startswith("U"), "SLACK_USER_ID should start with U(USER_ID)"
-            self.slack_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
+            # 봇을 통해 유저에게 메시지를 전송합니다.
+            self.slack_bot_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
 
-        self.reaction_notifications.clear()
+        self.__reaction_notifications.clear()
 
     def _should_react(self, message, user_id):
         """
@@ -98,10 +100,10 @@ class SlackMonitor:
         if settings.SLACK_MYTEAM_ID in message["text"]:
             self.react_to_message(message, settings.EMOJI_MENTION_TO_MY_TEAM, reason="@MyTeam mention detected")
 
-    def run(self, user_id, last_message_limit=10):
-        messages = self._get_recent_messages(last_message_limit)
+    def run(self):
+        messages = self._get_recent_messages(settings.LAST_MESSAGES_LIMIT)
 
         for message in messages:
-            self._should_react(message, user_id)
+            self._should_react(message, self.my_user_id)
 
         self.send_report_to_DM_reaction_notifications()
