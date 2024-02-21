@@ -36,5 +36,8 @@ pipenv run main.py
 - `groups:history` : 채널 내 메시지 히스토리를 읽기 위해 필요합니다.
 - `chat:write` :  (선택 사항) 1:1 DM을 통한 결과 전송 기능을 사용할 경우 필요합니다. `REPORT_RESULT_TO_DM` 환경변수를 `False`로 설정하면 이 권한은 필요하지 않습니다.
 
+[권한설정은 이 사진을 참고하세요.](https://github.com/DaeHyeoNi/slack-autoreaction/assets/1341628/acb5db86-edcc-4fcf-ae60-be283ea923d6)
+<br /><br /><br />
+
 
 ![](https://github.com/DaeHyeoNi/slack-autoreaction/assets/1341628/1409afe8-78bd-4a22-91f6-0b14d79aa633)
