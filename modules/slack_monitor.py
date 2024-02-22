@@ -53,7 +53,8 @@ class SlackMonitor:
 
         # Store reaction notification.
         message_id = message["ts"]
-        self.__reaction_notifications.setdefault(message_id, {"emojis": [], "text": text, "reason": reason})
+        who = message["user"]
+        self.__reaction_notifications.setdefault(message_id, {"emojis": [], "who": who, "text": text, "reason": reason})
         self.__reaction_notifications[message_id]["emojis"].append(emoji)
 
     def send_report_to_DM_reaction_notifications(self):
@@ -65,9 +66,10 @@ class SlackMonitor:
 
         for info in self.__reaction_notifications.values():
             emojis = ", ".join([f":{e}:" for e in info["emojis"]])
+            who = info["who"]
             reason = info["reason"]
             text = info["text"]
-            message = f"{emojis} 를 {reason} 로 인해 달았습니다.\n`{text}`"
+            message = f"from: <@{who}>\n{emojis} 를 {reason} 로 인해 달았습니다.\n`{text}`"
 
             # 봇을 통해 유저에게 메시지를 전송합니다.
             self.slack_bot_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
