@@ -14,7 +14,9 @@
 4. 나와 관련된 팀을 호출하는 메시지에 반응을 추가합니다.
 <details>
 <summary>(선택) 위의 행동을 수행하고 DM을 통해 보고합니다.</summary>
+ 
 ![image](https://github.com/DaeHyeoNi/slack-autoreaction/assets/1341628/8d7fd1c1-c3d8-4ace-9206-8e8fcdbee327)
+
 </details>
 
 ## 설치 방법
