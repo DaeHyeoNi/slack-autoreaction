@@ -1,4 +1,4 @@
-# Slack Auto Reaction
+# Slack Auto Reaction [![Lint](https://github.com/DaeHyeoNi/slack-autoreaction/actions/workflows/linter.yml/badge.svg?branch=master)](https://github.com/DaeHyeoNi/slack-autoreaction/actions/workflows/linter.yml)
 
 **아무도 상처받지 않는 세상을 위해 Slack 메시지에 자동으로 자연스러운 리액션을 추가하자!**
 
