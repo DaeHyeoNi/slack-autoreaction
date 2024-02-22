@@ -80,9 +80,14 @@ class SlackMonitor:
         self.__reaction_notifications.clear()
 
     def has_include_mention_in_message_text(self, message: Dict) -> bool:
-        text = message['text']
+        """
+        특정 유저들에게 보내는 메시지에 대한 반응을 막기 위해
+        메시지 내에 멘션이 존재한다면 나에게 관련있는 메시지인지를 평가를 진행합니다.
+        """
+        text = message["text"]
+
         # Check for user mentions
-        has_user_mention = '<@' in text
+        has_user_mention = "<@" in text
         # Check for channel-wide mentions
         has_channel_mention = any(call in text for call in ["<!channel>", "<!here>", "<!everyone>"])
 
@@ -100,9 +105,6 @@ class SlackMonitor:
             return
 
         # 인기있는 메시지 and 특정 유저에 대한 멘션이 없는 경우에만 반응합니다.
-        #
-        # 특정 유저들에게 보내는 메시지에 대한 반응을 막기 위해
-        # 메시지 내에 멘션이 존재한다면 나에게 관련있는 메시지인지를 평가하는 위해 아래에서 처리합니다.
         for reaction in reactions:
             if reaction["count"] >= settings.NEED_REACTION_COUNT and not self.has_include_mention_in_message_text(
                 message
