@@ -44,6 +44,7 @@ class SlackMonitor:
         logger.info(f"[REACT {emoji}] {reason} text='{text} (...)'")
 
         if settings.DRY_RUN:
+            logger.debug("DRY_RUN enabled, skipping actual reaction.")
             return
 
         try:
@@ -54,7 +55,9 @@ class SlackMonitor:
         # Store reaction notification.
         message_id = message["ts"]
         who = message["user"]
-        self.__reaction_notifications.setdefault(message_id, {"emojis": [], "who": who, "text": text, "reason": reason})
+        self.__reaction_notifications.setdefault(
+            message_id, {"emojis": [], "who": who, "text": text, "reason": reason}
+        )
         self.__reaction_notifications[message_id]["emojis"].append(emoji)
 
     def send_report_to_DM_reaction_notifications(self):
@@ -76,7 +79,10 @@ class SlackMonitor:
 
         self.__reaction_notifications.clear()
 
-    def _should_react(self, message, user_id):
+    def has_include_mention_in_message_text(self, message: Dict) -> bool:
+        return '<@' in message['text']
+
+    def _should_react(self, message: Dict, user_id):
         """
         반응해야 하는 메시지인지 확인합니다.
         """
@@ -86,19 +92,28 @@ class SlackMonitor:
         if self._is_already_reacted(reactions, user_id):
             return
 
+        # 인기있는 메시지 and 특정 유저에 대한 멘션이 없는 경우에만 반응합니다.
+        #
+        # 특정 유저들에게 보내는 메시지에 대한 반응을 막기 위해
+        # 메시지 내에 멘션이 존재한다면 나에게 관련있는 메시지인지를 평가하는 위해 아래에서 처리합니다.
         for reaction in reactions:
-            if reaction["count"] >= settings.NEED_REACTION_COUNT:
+            if reaction["count"] >= settings.NEED_REACTION_COUNT and not self.has_include_mention_in_message_text(
+                message
+            ):
                 self.react_to_message(message, reaction["name"], reason="popular reaction count")
 
+        # 채널 멘션에 반응합니다.
         channel_mention_triggers = ["<!here>", "<!channel>", "<!everyone>"]
         for trigger in channel_mention_triggers:
             if trigger in message["text"]:
                 self.react_to_message(message, settings.EMOJI_MENTION_IN_CHANNEL_ALL_USERS, reason="Mention detected")
                 break  # 한번만 반응하도록
 
+        # 나에 대한 멘션에 반응합니다.
         if f"<@{user_id}>" in message["text"]:
             self.react_to_message(message, settings.EMOJI_MENTION_TO_ME, reason="Mention detected")
 
+        # 내 팀에 대한 멘션에 반응합니다.
         if settings.SLACK_MYTEAM_ID in message["text"]:
             self.react_to_message(message, settings.EMOJI_MENTION_TO_MY_TEAM, reason="@MyTeam mention detected")
 
