@@ -80,7 +80,14 @@ class SlackMonitor:
         self.__reaction_notifications.clear()
 
     def has_include_mention_in_message_text(self, message: Dict) -> bool:
-        return '<@' in message['text']
+        text = message['text']
+        # Check for user mentions
+        has_user_mention = '<@' in text
+        # Check for channel-wide mentions
+        has_channel_mention = any(call in text for call in ["<!channel>", "<!here>", "<!everyone>"])
+
+        # If there's a user mention and no channel-wide mentions, return True
+        return has_user_mention and not has_channel_mention
 
     def _should_react(self, message: Dict, user_id):
         """
