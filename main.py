@@ -1,4 +1,6 @@
+import sys
 import time
+import traceback
 
 from config import logging_handler, settings
 from modules.slack_monitor import SlackMonitor
@@ -18,7 +20,7 @@ def in_working_time(now: time.struct_time):
     return settings.WORKING_HOUR_START <= now.tm_hour < settings.WORKING_HOUR_END
 
 
-if __name__ == "__main__":
+def main():
     logger.info("Start monitoring...")
 
     monitor = SlackMonitor()
@@ -28,3 +30,13 @@ if __name__ == "__main__":
             monitor.run()
 
         time.sleep(settings.LOOP_INTERVAL)
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        logger.info("Exit monitoring...")
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
+    sys.exit(0)
