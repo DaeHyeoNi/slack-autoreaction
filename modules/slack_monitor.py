@@ -49,13 +49,18 @@ class SlackMonitor:
 
         try:
             self.slack_client.reactions_add(channel=self.channel_id, name=emoji, timestamp=message["ts"])
+            # Store reaction notification.
+            message_id = message["ts"]
+            self.__reaction_notifications.setdefault(message_id, {"emojis": [], "reason": reason})
+            self.__reaction_notifications[message_id]["emojis"].append(emoji)
         except SlackApiError as e:
             logger.warn(f"Error adding reaction: {e.response['error']}")
 
-        # Store reaction notification.
-        message_id = message["ts"]
-        self.__reaction_notifications.setdefault(message_id, {"emojis": [], "reason": reason})
-        self.__reaction_notifications[message_id]["emojis"].append(emoji)
+    def _get_message_link(self, message_id: str) -> str:
+        """
+        메시지의 링크를 가져옵니다.
+        """
+        return self.slack_bot_client.chat_getPermalink(channel=self.channel_id, message_ts=message_id)["permalink"]
 
     def send_report_to_DM_reaction_notifications(self):
         """
@@ -67,8 +72,7 @@ class SlackMonitor:
         for message_id, info in self.__reaction_notifications.items():
             emojis = ", ".join([f":{e}:" for e in info["emojis"]])
             reason = info["reason"]
-            message_link = self.slack_bot_client.chat_getPermalink(channel=self.channel_id, message_ts=message_id)
-            message = f"{emojis} 를 {reason} 로 인해 달았습니다.\n{message_link}"
+            message = f"{emojis} 를 {reason} 로 인해 달았습니다.\n{self._get_message_link(message_id)}"
 
             # 봇을 통해 유저에게 메시지를 전송합니다.
             self.slack_bot_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
