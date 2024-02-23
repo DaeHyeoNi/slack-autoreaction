@@ -79,11 +79,11 @@ class SlackMonitor:
             reason = info["reason"]
             text = info["text"]
 
-            message = (
-                f"{emojis} 를 {reason} 로 인해 달았습니다.\n\nfrom: <@{who}>\n`{text}`\n\n{self._get_message_link(message_id)}"
-            )
             # 봇을 통해 유저에게 메시지를 전송합니다.
-            self.slack_bot_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
+            self.slack_bot_client.chat_postMessage(
+                channel=settings.SLACK_USER_ID,
+                text=f"{emojis} 를 {reason} 로 인해 달았습니다.\n\nfrom: <@{who}>\n`{text}`\n\n{self._get_message_link(message_id)}"
+            )
 
         self.__reaction_notifications.clear()
 
