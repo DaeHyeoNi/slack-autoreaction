@@ -40,7 +40,7 @@ class SlackMonitor:
         """
         이모지를 메시지에 추가합니다.
         """
-        text: str = message["text"].replace("\n", "")[:50]
+        text: str = message["text"].replace("\n", "")[:100]
         logger.info(f"[REACT {emoji}] {reason} text='{text} (...)'")
 
         if settings.DRY_RUN:
@@ -51,7 +51,10 @@ class SlackMonitor:
             self.slack_client.reactions_add(channel=self.channel_id, name=emoji, timestamp=message["ts"])
             # Store reaction notification.
             message_id = message["ts"]
-            self.__reaction_notifications.setdefault(message_id, {"emojis": [], "reason": reason})
+            who = message["user"]
+            self.__reaction_notifications.setdefault(
+                message_id, {"emojis": [], "who": who, "text": text, "reason": reason}
+            )
             self.__reaction_notifications[message_id]["emojis"].append(emoji)
         except SlackApiError as e:
             logger.warn(f"Error adding reaction: {e.response['error']}")
@@ -72,8 +75,13 @@ class SlackMonitor:
         for message_id, info in self.__reaction_notifications.items():
             emojis = ", ".join([f":{e}:" for e in info["emojis"]])
             reason = info["reason"]
-            message = f"{emojis} 를 {reason} 로 인해 달았습니다.\n{self._get_message_link(message_id)}"
+            who = info["who"]
+            reason = info["reason"]
+            text = info["text"]
 
+            message = (
+                f"{emojis} 를 {reason} 로 인해 달았습니다.\n\nfrom: <@{who}>\n`{text}`\n\n{self._get_message_link(message_id)}"
+            )
             # 봇을 통해 유저에게 메시지를 전송합니다.
             self.slack_bot_client.chat_postMessage(channel=settings.SLACK_USER_ID, text=message)
 
