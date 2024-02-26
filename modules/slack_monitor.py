@@ -97,7 +97,9 @@ class SlackMonitor:
         # Check for user mentions
         has_user_mention = "<@" in text
         # Check for channel-wide mentions
-        has_channel_mention = any(call in text for call in ["<!channel>", "<!here>", "<!everyone>", settings.SLACK_MYTEAM_ID])
+        has_channel_mention = any(
+            call in text for call in ["<!channel>", "<!here>", "<!everyone>", settings.SLACK_MYTEAM_ID]
+        )
 
         # If there's a user mention and no channel-wide mentions, return True
         return has_user_mention and not has_channel_mention
